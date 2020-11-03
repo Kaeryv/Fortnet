@@ -53,14 +53,12 @@ module class_network
         case('relu')
             l % activation => relu
             l % activation_prime => relu_prime
+            l % activation_str = activation
         case('sigmoid')
             l % activation => sigmoid
             l % activation_prime => sigmoid_prime
-        case('tanh')
-            l % activation => tanhf
-            l % activation_prime => tanh_prime
+            l % activation_str = activation
         end select
-        l % activation_str = activation
 
         l % size = size
 
@@ -85,12 +83,7 @@ module class_network
         current => begin
         forward_pass: do
             if(associated(current % previous)) then
-                ! current % h = matmul(transpose(current % w), current % previous % a)
-                call SGEMM('T', 'N', &
-                size(current%w,2), size(current%previous%a,2),size(current%w,1),&
-                1.0,current%w, size(current%w,1), &
-                current%previous%a,size(current%previous%a,1),0.0, &
-                current%h,size(current%h,1))
+                current % h = matmul(transpose(current % w), current % previous % a)
             else
                 current % h = matmul(transpose(current % w), x)
             end if
@@ -153,19 +146,18 @@ module class_network
 
     subroutine network_train(self, x, y, BS,LR,epoch)
         implicit none
+        real, dimension(:, :) :: x, y
+        real, dimension(:, :), allocatable :: x_batch, y_batch
         class(Network), intent(inout) :: self
-        real, intent(in), dimension(:, :) :: x, y
         integer, intent(in), optional :: BS,epoch
         real, intent(in), optional :: LR
 
-        real, dimension(:, :), allocatable :: x_batch, y_batch
         type(Layer), pointer :: current
         integer :: batch, batch_start, i
         real :: loss
 
         ! Allocate buffers
         current => self % begin
-
         allocation: do
             print *, "alloc ",  current % activation_str, current % size,BS
             allocate(current % h (current % size,BS))
@@ -181,7 +173,6 @@ module class_network
 
         allocate(x_batch(size(x,1), BS))
         allocate(y_batch(size(y,1), BS))
-
         print *, size(x,1), BS
         do i = 1, epoch
             do batch = 1, 500
@@ -220,6 +211,7 @@ module class_network
         deallocate(x_batch, y_batch)
         current => self % begin
         deallocation: do
+            print *, "alloc ",  current % activation_str, current % size,BS
             deallocate(current % h )
             deallocate(current % a )
             deallocate(current % dh)

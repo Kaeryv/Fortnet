@@ -1,0 +1,5 @@
+*.o
+*.a
+*.ipynb
+*.exe
+*.mod
