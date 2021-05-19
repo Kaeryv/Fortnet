@@ -85,12 +85,7 @@ module class_network
         current => begin
         forward_pass: do
             if(associated(current % previous)) then
-                ! current % h = matmul(transpose(current % w), current % previous % a)
-                call SGEMM('T', 'N', &
-                size(current%w,2), size(current%previous%a,2),size(current%w,1),&
-                1.0,current%w, size(current%w,1), &
-                current%previous%a,size(current%previous%a,1),0.0, &
-                current%h,size(current%h,1))
+                current % h = matmul(transpose(current % w), current % previous % a)
             else
                 current % h = matmul(transpose(current % w), x)
             end if
@@ -203,6 +198,7 @@ module class_network
 
                 current => self % begin
                 current % w = current % w - LR * matmul(x_batch, transpose(current % dh))
+
                 current => current % next
                 update_pass: do
                     current % w = current % w - LR * matmul(current % previous % da, transpose(current % dh))
