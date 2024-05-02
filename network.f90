@@ -19,6 +19,7 @@ module class_network
         procedure :: print => network_print
         procedure :: train => network_train
         procedure :: validate => network_validate
+        procedure :: save_state => network_save_state
     end type Network
 
     contains
@@ -95,6 +96,31 @@ module class_network
             else
                 exit forward_pass
             end if
+        end do forward_pass
+    end subroutine
+
+    subroutine network_save_state(self, proto_filepath)
+        class(Network), intent(inout) :: self
+        type(Layer), pointer :: current
+        character(*) :: proto_filepath
+        character(len=128) :: filepath, fileformat
+        integer :: i = 0
+        print *, "Saving network"
+
+        current => self % begin
+        forward_pass: do
+          ! Dump current % w
+          write(filepath, "(A, I0.2, A)") proto_filepath, i, ".txt"
+          i = i + 1
+          open(file=filepath, action="write", unit=1)
+          write(fileformat, "(A, I0.6,A,I0.6, A)") "(", size(current % w, 1), "(", size(current % w, 2), "(G24.5, 1x), /))"
+          write(1, fileformat) current % w
+          close(unit=1)
+          if(associated(current % next)) then
+              current => current % next
+          else
+              exit forward_pass
+          end if
         end do forward_pass
     end subroutine
 
